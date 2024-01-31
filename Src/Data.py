@@ -10,28 +10,23 @@ class Frame:
         return output_string
 
 
-def make_frame(data):
-    data_list = data.split("/")
-    frame = Frame(data_list[0], data_list[1], data_list[2])
+def input_frame(data):
+    try:
+        data_list = data.split("/")
+        frame = Frame(data_list[0], data_list[1], data_list[2])
+    except:
+        frame = Frame("NONE", -1, -1)
     return frame
 
 
-class Window:
-
-    def __init__(self, window_size):
-        self.buffer = []
-        self.window_size = window_size
-
-    def fill_window(self, frame_list):
-        if len(frame_list) != self.window_size:
-            raise Exception("Window size does not match frame list")
-        else:
-            self.__index_frames(frame_list)
-
-    def __index_frames(self, frame_list):
-        counter = 0
-        for frame in frame_list:
-            frame.id = counter
-            counter += 1
-            self.buffer.append(frame)
-
+def input_stream(big_data, sequence_number, starting_number):
+    frame_list = []
+    big_data_list = big_data.split(" ")
+    counter = starting_number
+    for data in big_data_list:
+        frame = Frame(str(data), counter, 0)
+        frame_list.append(frame)
+        counter += 1
+        if counter == sequence_number:
+            counter = 0
+    return frame_list
