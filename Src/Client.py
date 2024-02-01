@@ -29,25 +29,32 @@ class Client:
         print(f"Connection successful")
 
     def start(self):
-        connection_time_time = 0
+        read_cycle_counter = 1
+        connection_time = 0
         while self.__connection_flag:
+            print(f"t={connection_time} ",end=" ")
+            if self.__sending_index == len(self.__buffer):
+                self.__connection_flag = False
+                self.socket.close()
+                break
             time.sleep(1)
             self.__send_cycle()
-            self.__read_cycle()
-            connection_time_time += 1
+            if read_cycle_counter % self.__window_size == 0:
+                self.__read_cycle()
+            connection_time += 1
+            read_cycle_counter += 1
 
     def __send_cycle(self):
         data = self.__buffer[self.__sending_index].output()
-        print(f"Client trans: {data}")
+        print(f"Client trans data frame {self.__sending_index}")
         self.__sending_index += 1
         self.socket.send(data.encode())
 
     def __read_cycle(self):
         message = self.socket.recv(1024).decode()
-        print(f"Client recv: {message}")
         frame = Data.input_frame(message)
-        self.__message_buffer.append(frame)
-        # TODO error handling
+        print(f"Client recv: {frame.data}/{frame.id}")
+
 
     def send_data(self, data):
         input_frames = Data.input_stream(data, self.__sequence_number, len(self.__buffer) + len(self.__window))
@@ -65,5 +72,5 @@ class Client:
 client = Client(2, 8)
 client.connect("127.0.0.1", 8080)
 client.send_data("Hi my name is Amirali Ghaedi")
+client.send_data("and I am so happy to be here with you guys and so funny too hooray")
 client.start()
-# client.send_data("and I am so happy to be here with you guys and so funny too hooray")

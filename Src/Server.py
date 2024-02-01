@@ -47,20 +47,19 @@ class Server:
 
     def __read_cycle(self):
         data = self.connection.recv(1024).decode()
-
         frame = Data.input_frame(data)
         suspected_frame_id = (len(self.__buffer) + len(self.__window)) % self.__sequence_number
         # data not received TODO
-        print(f"wtf,{suspected_frame_id},{frame.id}")
         if frame.p == -1:
             print("No data received form client")
         # wrong frame type
         elif frame.p == 1:
             print("Wrong frame type from client, p bit was 1")
         # window id match suspected id
-        elif frame.id == suspected_frame_id and frame.p == 0:
+        elif frame.id == suspected_frame_id:
             print(f"Server recv data frame {frame.id}")
             self.__window.append(frame)
+            suspected_frame_id += 1
         # window id does not match suspected id TODO
         else:
             srej_frame = Frame("REJ", suspected_frame_id, 1)
@@ -68,10 +67,9 @@ class Server:
 
         # window filled
         if len(self.__window) == self.__window_size:
-            print("Server window filled")
             self.__add_window_to_buffer()
             self.__window.clear()
-            rr_frame = frame("RR", suspected_frame_id + 1, 1)
+            rr_frame = Frame("RR", suspected_frame_id % self.__sequence_number, 1)
             self.__message_frames.append(rr_frame)
 
     def __add_window_to_buffer(self):

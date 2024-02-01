@@ -13,7 +13,7 @@ class Frame:
 def input_frame(data):
     try:
         data_list = data.split("/")
-        frame = Frame(data_list[0], data_list[1], data_list[2])
+        frame = Frame(data_list[0], int(data_list[1]), int(data_list[2]))
     except:
         frame = Frame("NONE", -1, -1)
     return frame
