@@ -17,6 +17,7 @@ class Client:
         self.__window_size = window_size
         self.__message_buffer = []
         self.__sending_index = 0
+        self.__sequence_packet_counter = 0
 
     def __initialize_socket(self):
         s = socket.socket(self.__connection_type, self.__protocol_type)
@@ -32,29 +33,41 @@ class Client:
         read_cycle_counter = 1
         connection_time = 0
         while self.__connection_flag:
-            print(f"t={connection_time} ",end=" ")
-            if self.__sending_index == len(self.__buffer):
+            if self.__sequence_packet_counter * self.__sequence_number:
                 self.__connection_flag = False
                 self.socket.close()
                 break
-            time.sleep(1)
-            self.__send_cycle()
-            if read_cycle_counter % self.__window_size == 0:
-                self.__read_cycle()
-            connection_time += 1
-            read_cycle_counter += 1
+            for i in range(self.__window_size):
+                print(f"t={connection_time} ", end=" ")
+
+                time.sleep(1)
+                self.__send_cycle()
+                if read_cycle_counter % self.__window_size == 0:
+                    self.__read_cycle()
+                connection_time += 1
+                read_cycle_counter += 1
+
+    def __update_window(self):
+        for i in range(self.__window_size):
+            self.__window[i] = self.__buffer[(self.__window_index * self.__window_size) + self.__sending_index + i]
 
     def __send_cycle(self):
-        data = self.__buffer[self.__sending_index].output()
+        data = self.__window.pop(0)
         print(f"Client trans data frame {self.__sending_index}")
-        self.__sending_index += 1
         self.socket.send(data.encode())
+        self.__sending_index += 1
+        # full window sent
+        if len(self.__window_size) == 0:
+            self.__window_index += 1
+            self.__update_window()
 
     def __read_cycle(self):
         message = self.socket.recv(1024).decode()
         frame = Data.input_frame(message)
+        if frame.p == 1:
+            if frame.data == "RR":
+                self.__sending_index = frame.id
         print(f"Client recv: {frame.data}/{frame.id}")
-
 
     def send_data(self, data):
         input_frames = Data.input_stream(data, self.__sequence_number, len(self.__buffer) + len(self.__window))
