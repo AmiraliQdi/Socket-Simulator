@@ -9,6 +9,7 @@ RED = "\033[91m"
 GREEN = "\033[92m"
 RESET = "\033[0m"
 
+
 class Client:
 
     def __init__(self, window_size, sequence_number, connection_type=socket.AF_INET, protocol_type=socket.SOCK_STREAM):
@@ -24,7 +25,11 @@ class Client:
         self.__sending_index = 0
         self.__window_index = 0
         self.connection_time = 0
+        self.__corrupted_frames = []
+        self.__buffer_index = 0
         self.__waiting_flag = False
+        self.__connection_module = None
+        self.__last_sent_frames = []
 
     def get_connection_time(self):
         return f"{(time.time() - self.connection_time):.1f}"
@@ -42,7 +47,14 @@ class Client:
         print("----------------")
         self.connection_time = time.time()
 
-    def start(self):
+    def start(self, connection_module):
+        self.__connection_module = connection_module
+        if connection_module == "GOBACK":
+            self.__go_back_module()
+        elif connection_module == "SELECTIVE":
+            self.__selective_module()
+
+    def __go_back_module(self):
         self.__update_window()
         while self.__connection_flag:
             self.__print_window()
@@ -65,7 +77,6 @@ class Client:
             return False
 
     def __update_window(self):
-        self.__last_window = self.__window
         self.__window.clear()
         for i in range(self.__window_size):
             try:
@@ -91,6 +102,104 @@ class Client:
         self.socket.send(data.output().encode())
         self.__sending_index += 1
 
+    def __selective_module(self):
+        for i in range(self.__sequence_number):
+            self.__last_sent_frames.append(None)
+
+        self.__update_window_SEL()
+
+        while self.__connection_flag:
+
+            self.__print_window()
+
+            self.__send_cycle_SEL()
+
+            self.__read_cycle_SEL()
+
+            self.__update_window_SEL()
+
+            self.__corruption_logic()
+
+            if self.__is_done():
+                self.end_connection()
+            print("----------------")
+
+    def __update_window_SEL(self):
+        self.__window.clear()
+        for i in range(self.__window_size):
+            try:
+                self.__window.append(self.__buffer[self.__buffer_index + i])
+            except:
+                self.disconnect()
+
+    def __update_last_frames(self, frame):
+        self.__last_sent_frames[frame.id] = frame
+
+    def __corruption_logic(self):
+        if len(self.__corrupted_frames) > 0:
+            first_corrupted_in_list = self.__corrupted_frames.pop(0)
+            fixing_frame = self.__last_sent_frames[first_corrupted_in_list]
+            new_window = self.__shift()
+            try:
+                new_window.insert(0, fixing_frame)
+            except:
+                self.disconnect()
+            self.__window = new_window
+            self.__buffer_index -= 1
+
+    def __shift(self):
+        new_window = []
+        try:
+            for i in range(self.__window_size - 1):
+                new_window.append(self.__window[i])
+            return new_window
+        except:
+            self.disconnect()
+            return
+
+    def disconnect(self):
+        self.socket.close()
+        self.__connection_flag = False
+        print("Disconnected")
+        return
+
+    def __send_cycle_SEL(self):
+        print(f"t={self.get_connection_time()}|SendCycle::")
+        if self.__waiting_flag:
+            print("Waiting")
+            return
+        else:
+            pass
+        for i in range(self.__window_size):
+            frame = self.__window[i]
+            self.__update_last_frames(frame)
+            data = self.__window[i]
+            print(f"Client trans {data.data}/{data.id}")
+            self.socket.send(data.output().encode())
+            time.sleep(DELAY)
+            self.__buffer_index += 1
+            self.__waiting_flag = True
+
+    def __read_cycle_SEL(self):
+        print(f"t={self.get_connection_time()}|ReadCycle::")
+        try:
+            message = self.socket.recv(1024).decode()
+            frame = Data.input_frame(message)
+            time.sleep(DELAY)
+        except socket.timeout:
+            print("Timeout")
+            return
+        if frame.p == 1:
+            if frame.data == "RR":
+                self.__waiting_flag = False
+                print(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}")
+            elif frame.data == "REJ":
+                # print(
+                #    f"sending index was {self.__window[self.__sending_index].id} but changed to {frame.id} by REJ")
+                print(f"Client recv: {RED}{frame.data}{RESET}/{frame.id}")
+                self.__corrupted_frames.append(frame.id)
+                self.__waiting_flag = False
+
     def __print_window(self):
         print("{ ", end="")
         for frame in self.__window:
@@ -114,7 +223,7 @@ class Client:
                 self.__update_window()
                 print(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}")
             elif frame.data == "REJ":
-                #print(
+                # print(
                 #    f"sending index was {self.__window[self.__sending_index].id} but changed to {frame.id} by REJ")
                 self.__waiting_flag = False
                 self.__sending_index = self.__find_frameIndex_from_frameID(frame.id)
@@ -151,7 +260,7 @@ class Client:
             print(frame.output())
 
 
-client = Client(5, 8)
+client = Client(4, 8)
 client.connect("127.0.0.1", 8080)
 client.send_data(
     "In a bustling city, a hidden cafe exudes warmth with the scent of freshly brewed coffee and soft jazz."
@@ -159,4 +268,4 @@ client.send_data(
     "and a meticulous barista crafting indulgent moments. "
     "A quiet oasis where time slows amid aromatic swirls and hushed conversations.")
 client.send_data("NONE")
-client.start()
+client.start("GOBACK")

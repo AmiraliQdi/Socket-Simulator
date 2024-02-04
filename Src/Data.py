@@ -1,6 +1,6 @@
 import random
 
-CORRUPTION_RATE = 0.0
+CORRUPTION_RATE = 0.1
 
 
 class Frame:
@@ -16,7 +16,7 @@ class Frame:
         random_number = random.random()
         if random_number < CORRUPTION_RATE and self.p == 0:
             output_id = str(-1)
-        output_string = str(self.data) + "/" + output_id + "/" + str(self.p)
+        output_string = f"{str(self.data)}/{output_id}/{str(self.p)}"
         return output_string
 
     def set_sent_time(self, sent_time):
@@ -24,6 +24,7 @@ class Frame:
             print(f"Resending (TIMED OUT) |{self.data}/{self.id}")
             self.timeout.reset(sent_time)
         self.timeout = Timeout(sent_time)
+
 
 
 class Timeout:
