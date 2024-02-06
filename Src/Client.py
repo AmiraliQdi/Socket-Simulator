@@ -31,6 +31,15 @@ class Client:
         self.__connection_module = None
         self.__last_sent_frames = []
 
+        self.text_redirector = None
+
+    def set_text_redirector(self, text_redirector):
+        self.text_redirector = text_redirector
+
+    def print_to_gui(self, message):
+        if self.text_redirector:
+            self.text_redirector.write(message)
+
     def get_connection_time(self):
         return f"{(time.time() - self.connection_time):.1f}"
 
@@ -40,11 +49,11 @@ class Client:
         return s
 
     def connect(self, ip_address, port):
-        print(f"Trying to connect to {ip_address}:{port}")
+        self.print_to_gui(f"Trying to connect to {ip_address}:{port}\n")
         self.socket.connect((ip_address, port))
         self.__connection_flag = True
-        print(f"Connection successful")
-        print("----------------")
+        self.print_to_gui(f"Connection successful\n")
+        self.print_to_gui("----------------\n")
         self.connection_time = time.time()
 
     def start(self, connection_module):
@@ -68,7 +77,7 @@ class Client:
 
             if self.__is_done():
                 self.end_connection()
-            print("----------------")
+            self.print_to_gui("----------------\n")
 
     def __is_done(self):
         if self.__window_index * self.__window_size + self.__sending_index >= len(self.__buffer):
@@ -86,19 +95,19 @@ class Client:
                 continue
 
     def end_connection(self):
-        print("Disconnected")
+        self.print_to_gui("Disconnected\n")
         self.__connection_flag = False
         self.socket.close()
         self.__window.clear()
 
     def __send_cycle(self):
-        print(f"t={self.get_connection_time()}|SendCycle::")
+        self.print_to_gui(f"t={self.get_connection_time()}|SendCycle::\n")
         if self.__waiting_flag:
             return
         else:
             pass
         data = self.__window[self.__sending_index]
-        print(f"Client trans {data.data}/{data.id}")
+        self.print_to_gui(f"Client trans {data.data}/{data.id}\n")
         self.socket.send(data.output().encode())
         self.__sending_index += 1
 
@@ -122,7 +131,7 @@ class Client:
 
             if self.__is_done():
                 self.end_connection()
-            print("----------------")
+            self.print_to_gui("----------------\n")
 
     def __update_window_SEL(self):
         self.__window.clear()
@@ -160,13 +169,13 @@ class Client:
     def disconnect(self):
         self.socket.close()
         self.__connection_flag = False
-        print("Disconnected")
+        self.print_to_gui("Disconnected\n")
         return
 
     def __send_cycle_SEL(self):
-        print(f"t={self.get_connection_time()}|SendCycle::")
+        self.print_to_gui(f"t={self.get_connection_time()}|SendCycle::\n")
         if self.__waiting_flag:
-            print("Waiting")
+            self.print_to_gui("Waiting\n")
             return
         else:
             pass
@@ -174,46 +183,46 @@ class Client:
             frame = self.__window[i]
             self.__update_last_frames(frame)
             data = self.__window[i]
-            print(f"Client trans {data.data}/{data.id}")
+            self.print_to_gui(f"Client trans {data.data}/{data.id}\n")
             self.socket.send(data.output().encode())
             time.sleep(DELAY)
             self.__buffer_index += 1
             self.__waiting_flag = True
 
     def __read_cycle_SEL(self):
-        print(f"t={self.get_connection_time()}|ReadCycle::")
+        self.print_to_gui(f"t={self.get_connection_time()}|ReadCycle::\n")
         try:
             message = self.socket.recv(1024).decode()
             frame = Data.input_frame(message)
             time.sleep(DELAY)
         except socket.timeout:
-            print("Timeout")
+            self.print_to_gui("Timeout\n")
             return
         if frame.p == 1:
             if frame.data == "RR":
                 self.__waiting_flag = False
-                print(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}")
+                self.print_to_gui(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}\n")
             elif frame.data == "REJ":
-                # print(
+                # self.print_to_gui(
                 #    f"sending index was {self.__window[self.__sending_index].id} but changed to {frame.id} by REJ")
-                print(f"Client recv: {RED}{frame.data}{RESET}/{frame.id}")
+                self.print_to_gui(f"Client recv: {RED}{frame.data}{RESET}/{frame.id}\n")
                 self.__corrupted_frames.append(frame.id)
                 self.__waiting_flag = False
 
     def __print_window(self):
-        print("{ ", end="")
+        self.print_to_gui("{ ")
         for frame in self.__window:
-            print(f"{frame.data}/{frame.id} ,", end="")
-        print("}")
+            self.print_to_gui(f"{frame.data}/{frame.id} ,")
+        self.print_to_gui("}")
 
     def __read_cycle(self):
-        print(f"t={self.get_connection_time()}|ReadCycle::")
+        self.print_to_gui(f"t={self.get_connection_time()}|ReadCycle::\n")
         try:
             message = self.socket.recv(1024).decode()
             frame = Data.input_frame(message)
             time.sleep(DELAY)
         except socket.timeout:
-            print("Timeout")
+            self.print_to_gui("Timeout\n")
             return
         if frame.p == 1:
             if frame.data == "RR" and self.__check_if_RR_needed(frame):
@@ -221,13 +230,13 @@ class Client:
                 self.__window_index += 1
                 self.__sending_index = 0
                 self.__update_window()
-                print(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}")
+                self.print_to_gui(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}\n")
             elif frame.data == "REJ":
-                # print(
+                # self.print_to_gui(
                 #    f"sending index was {self.__window[self.__sending_index].id} but changed to {frame.id} by REJ")
                 self.__waiting_flag = False
                 self.__sending_index = self.__find_frameIndex_from_frameID(frame.id)
-                print(f"Client recv: {RED}{frame.data}{RESET}/{frame.id}")
+                self.print_to_gui(f"Client recv: {RED}{frame.data}{RESET}/{frame.id}\n")
 
     def __check_if_RR_needed(self, rr_frame):
         if self.__window[0].id == rr_frame.id:
@@ -257,7 +266,7 @@ class Client:
 
     def print_buffer(self):
         for frame in self.__buffer:
-            print(frame.output())
+            self.print_to_gui(frame.output())
 
 
 # client = Client(4, 8)

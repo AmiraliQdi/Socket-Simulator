@@ -26,9 +26,9 @@ class SimulationGUI:
         self.label_connection_type = ttk.Label(root, text="Select Connection Type:")
         self.label_connection_type.grid(row=2, column=0, columnspan=2, pady=10)
 
-        self.connection_type_var = tk.StringVar(value="Selective")
+        self.connection_type_var = tk.StringVar(value="SELECTIVE")
         self.connection_type_combobox = ttk.Combobox(root, textvariable=self.connection_type_var,
-                                                     values=["Selective", "Go-Back"])
+                                                     values=["SELECTIVE", "GOBACK"])
         self.connection_type_combobox.grid(row=3, column=0, columnspan=2, pady=5)
 
         self.label_ip = ttk.Label(root, text="Enter IP Address:")
@@ -64,20 +64,17 @@ class SimulationGUI:
             client_thread.start()
 
     def start_server(self, ip_address, port, connection_type):
-        # Redirect stdout to the Text widget
-        sys.stdout = TextRedirector(self.log_text, "stdout")
         print(f"Starting server with IP: {ip_address}, Port: {port}, Connection Type: {connection_type}")
-
         server = Server(str(ip_address), int(port), 4, 8)
+        server.set_text_redirector(TextRedirector(self.log_text, tag="stdout"))
         server.listen(connection_type)
+        print(connection_type)
 
     def start_client(self, ip_address, port, connection_type):
-        # Redirect stdout to the Text widget
-        sys.stdout = TextRedirector(self.log_text, "stdout")
         print(f"Starting client with IP: {ip_address}, Port: {port}, Connection Type: {connection_type}")
-
-        client = Client(4, 8,self)
+        client = Client(4, 8)
         client.connect(str(ip_address), int(port))
+        client.set_text_redirector(TextRedirector(self.log_text, tag="stdout"))
         client.send_data(
             "In a bustling city, a hidden cafe exudes warmth with the scent of freshly brewed coffee and soft jazz."
             " Patrons immersed in creativity, sunlight filtering through curtains, "
@@ -86,15 +83,22 @@ class SimulationGUI:
         client.send_data("NONE")
         client.start(connection_type)
 
+
+
 class TextRedirector:
-    def __init__(self, text_widget, tag="stdout"):
+    def __init__(self, text_widget, tag=None):
         self.text_widget = text_widget
-        self.tag = tag
+        self.tag = tag  # Save the tag
 
-    def write(self, str):
-        self.text_widget.insert(tk.END, str, (self.tag,))
+    def write(self, message):
+        # If a tag is specified, add it to the insert call
+        if self.tag:
+            self.text_widget.insert(tk.END, message, (self.tag,))
+        else:
+            self.text_widget.insert(tk.END, message)
+
         self.text_widget.see(tk.END)
-
+        self.text_widget.after(0, lambda: self.text_widget.update_idletasks())
 
 if __name__ == "__main__":
     root = tk.Tk()
