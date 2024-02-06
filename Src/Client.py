@@ -3,7 +3,7 @@ import time
 
 import Data
 
-DELAY = 0.2
+DELAY = 1
 
 RED = "\033[91m"
 GREEN = "\033[92m"
@@ -260,12 +260,12 @@ class Client:
             print(frame.output())
 
 
-client = Client(4, 8)
-client.connect("127.0.0.1", 8080)
-client.send_data(
-    "In a bustling city, a hidden cafe exudes warmth with the scent of freshly brewed coffee and soft jazz."
-    " Patrons immersed in creativity, sunlight filtering through curtains, "
-    "and a meticulous barista crafting indulgent moments. "
-    "A quiet oasis where time slows amid aromatic swirls and hushed conversations.")
-client.send_data("NONE")
-client.start("GOBACK")
+# client = Client(4, 8)
+# client.connect("127.0.0.1", 8080)
+# client.send_data(
+#     "In a bustling city, a hidden cafe exudes warmth with the scent of freshly brewed coffee and soft jazz."
+#     " Patrons immersed in creativity, sunlight filtering through curtains, "
+#     "and a meticulous barista crafting indulgent moments. "
+#     "A quiet oasis where time slows amid aromatic swirls and hushed conversations.")
+# client.send_data("NONE")
+# client.start("SELECTIVE")

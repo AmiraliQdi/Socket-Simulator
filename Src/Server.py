@@ -5,7 +5,7 @@ import time
 from Src import Data
 from Src.Data import *
 
-DELAY = 0.2
+DELAY = 1
 SERVER_TIME_OUT_LIMIT = 5
 
 RED = "\033[91m"
@@ -357,5 +357,5 @@ class Server:
             print(self.__srej_buffer[i].output())
 
 
-server = Server("127.0.0.1", 8080, 4, 8)
-server.listen("GOBACK")
+# server = Server("192.168.100.2", 8080, 4, 8)
+# server.listen("SELECTIVE")
