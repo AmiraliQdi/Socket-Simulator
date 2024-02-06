@@ -5,9 +5,6 @@ import Data
 
 DELAY = 1
 
-RED = "\033[91m"
-GREEN = "\033[92m"
-RESET = "\033[0m"
 
 
 class Client:
@@ -201,11 +198,11 @@ class Client:
         if frame.p == 1:
             if frame.data == "RR":
                 self.__waiting_flag = False
-                self.print_to_gui(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}\n")
+                self.print_to_gui(f"Client recv: {frame.data}/{frame.id}\n")
             elif frame.data == "REJ":
                 # self.print_to_gui(
                 #    f"sending index was {self.__window[self.__sending_index].id} but changed to {frame.id} by REJ")
-                self.print_to_gui(f"Client recv: {RED}{frame.data}{RESET}/{frame.id}\n")
+                self.print_to_gui(f"Client recv: {frame.data}/{frame.id}\n")
                 self.__corrupted_frames.append(frame.id)
                 self.__waiting_flag = False
 
@@ -230,13 +227,13 @@ class Client:
                 self.__window_index += 1
                 self.__sending_index = 0
                 self.__update_window()
-                self.print_to_gui(f"Client recv: {GREEN}{frame.data}{RESET}/{frame.id}\n")
+                self.print_to_gui(f"Client recv: {frame.data}/{frame.id}\n")
             elif frame.data == "REJ":
                 # self.print_to_gui(
                 #    f"sending index was {self.__window[self.__sending_index].id} but changed to {frame.id} by REJ")
                 self.__waiting_flag = False
                 self.__sending_index = self.__find_frameIndex_from_frameID(frame.id)
-                self.print_to_gui(f"Client recv: {RED}{frame.data}{RESET}/{frame.id}\n")
+                self.print_to_gui(f"Client recv: {frame.data}/{frame.id}\n")
 
     def __check_if_RR_needed(self, rr_frame):
         if self.__window[0].id == rr_frame.id:

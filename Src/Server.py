@@ -8,11 +8,6 @@ from Src.Data import *
 DELAY = 1
 SERVER_TIME_OUT_LIMIT = 5
 
-RED = "\033[91m"
-GREEN = "\033[92m"
-RESET = "\033[0m"
-
-
 class Server:
 
     def __init__(self, ip_address, port, window_size, sequence_number, connection_type=socket.AF_INET,
@@ -226,7 +221,7 @@ class Server:
             if frame.id == self.__suspected_mistaken_frame:
                 self.print_to_gui(f"***Correct frame received[{frame.id}]***\n")
                 self.__buffer[self.__srej_buffer_frames_index[0]] = frame
-                self.print_to_gui(f"{GREEN}SREJ corruption fixed{RESET}\n")
+                self.print_to_gui(f"SREJ corruption fixed\n")
                 # self.__srej_buffer.pop(0)
                 self.__srej_buffer_frames_index.pop(0)
             else:
