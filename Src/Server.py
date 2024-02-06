@@ -349,13 +349,12 @@ class Server:
             pass
 
     def __print_message_buffer(self):
-        for frame in server.__message_frames:
+        for frame in self.__message_frames:
             print(frame.output())
 
     def __print_srej_buffer(self):
         for i in range(len(self.__srej_buffer)):
             print(self.__srej_buffer[i].output())
-
 
 # server = Server("192.168.100.2", 8080, 4, 8)
 # server.listen("SELECTIVE")

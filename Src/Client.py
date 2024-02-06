@@ -268,4 +268,4 @@ class Client:
 #     "and a meticulous barista crafting indulgent moments. "
 #     "A quiet oasis where time slows amid aromatic swirls and hushed conversations.")
 # client.send_data("NONE")
-# client.start("SELECTIVE")
+# client.start("GOBACK")

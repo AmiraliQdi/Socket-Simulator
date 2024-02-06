@@ -76,7 +76,7 @@ class SimulationGUI:
         sys.stdout = TextRedirector(self.log_text, "stdout")
         print(f"Starting client with IP: {ip_address}, Port: {port}, Connection Type: {connection_type}")
 
-        client = Client(4, 8)
+        client = Client(4, 8,self)
         client.connect(str(ip_address), int(port))
         client.send_data(
             "In a bustling city, a hidden cafe exudes warmth with the scent of freshly brewed coffee and soft jazz."
